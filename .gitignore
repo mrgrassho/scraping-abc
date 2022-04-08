@@ -22,5 +22,4 @@ test-output.*
 /tests/keys/localhost.key
 
 # Windows
-Thumbs.db
-
+Thumbs.dB
