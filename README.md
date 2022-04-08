@@ -38,8 +38,6 @@ Vamos a empezar de a poco e ir mejorando la solucion en las siguientes iteracion
 5. **v5**. Almacenemos los datos!!! 🙊
 6. **v6**. ¿Y ahora? Armemos una API!
 
-Comencemossss 🏎
-
 ---
 
 ### v1 - Instalación & presentación de [Scrapy](https://docs.scrapy.org/en/latest/topics/commands.html).
@@ -85,7 +83,7 @@ touch DPaaS_v1/spiders/example.py
 
 Y agregamos el siguiente contenido en `DPaaS_v1/spiders/example.py`. El cual es un scraper que realiza una petición `GET` a `http://example.com/` y extrae el titulo y el primer parrafo de la página utilizando Xpath.
 
-```
+```python
 import scrapy
 
 
@@ -104,7 +102,7 @@ class ExampleSpider(scrapy.Spider):
 
 #### Corriendo los scrapers
 
-Para correr el scraper es fácil, sobre la carpeta del proyecto que creamos (`DPaaS_v1`) corremos el siguiente comando, el cual ejecutará el scraper y guardará el contenido en `data.json`:
+Correr el scraper es fácil, sobre la carpeta del proyecto que creamos (`DPaaS_v1`) pegamos el siguiente comando, el cual ejecutará el scraper y guardará el contenido en `data.json`:
 
 ```
 scrapy crawl example -O data.json
@@ -112,7 +110,7 @@ scrapy crawl example -O data.json
 
 Ahora vemos el contenido, para chequear que corrió bien:
 
-```
+```json
 $ cat data.json | jq
 [
   {
