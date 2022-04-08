@@ -30,7 +30,7 @@ Por ejemplo, el precio por unidad de Pampers Confort XG es `17.29 UYU` (1002.99/
 #### Lista de sitios:
 - [panaleraencasa.com](https://panaleraencasa.com/?s=pa%C3%B1al&post_type=product&product_cat=0)
 - [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
-- [pigalle.com.uy](https://www.pigalle.com.uy/filterSearch?q=pa%c3%b1al&adv=true&sid=true#/pageSize=24&orderBy=0)
+- [pigalle.com.uy](https://www.pigalle.com.uy/bebes_panales-y-toallitas)
 
 ## Etapas
 
@@ -268,4 +268,60 @@ class PanaleraEnCasaSpider(scrapy.Spider):
         if next_page is not None:
             yield response.follow(next_page, self.parse)
 
+```
+
+#### [pigalle.com.uy](https://www.pigalle.com.uy/bebes_panales-y-toallitas)
+
+<img width="1108" alt="Screen Shot 2022-04-08 at 23 41 35" src="https://user-images.githubusercontent.com/20926292/162535967-a1626255-b05c-4f09-afcd-f02ac67c9ab2.png">
+
+
+
+
+```python
+>>> item = response.xpath("//div[contains(@class, 'item-box')]")
+>>> item.xpath("//h2/text()").get()
+'\r\n\t\t\tBABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]\r\n\t\t'
+>>> item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
+'\r\n\t\t\t$1.569\r\n\t\t'
+```
+
+```python
+import scrapy
+
+
+class PigalleSpider(scrapy.Spider):
+    name = 'pigalle'
+    allowed_domains = ['www.pigalle.com.uy']
+    start_urls = ['https://www.pigalle.com.uy/bebes_panales-y-toallitas']
+
+    def parse(self, response):
+        for item in response.xpath("//div[contains(@class, 'item-box')]"):
+            price = item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
+            yield {
+                "description": item.xpath("//h2/text()").get().strip(),
+                "price": float(price.strip().replace(".", "").replace("$",""))
+            }
+        next_page = response.xpath("//li[@class='next-page']/a/@href").get()
+        if next_page is not None:
+            yield response.follow(next_page, self.parse)
+```
+
+
+```json
+$ cat pigalle.json | jq
+[
+  {
+    "description": "BABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]",
+    "price": 1569
+  },
+  {
+    "description": "BABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]",
+    "price": 1569
+  },
+  {
+    "description": "BABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]",
+    "price": 1569
+  },
+  ...
+]
 ```
