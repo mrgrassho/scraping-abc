@@ -38,9 +38,9 @@ Vamos a empezar de a poco e ir mejorando la solucion en las siguientes iteracion
 
 1. **v1**. Instalación & presentación de [Scrapy](https://docs.scrapy.org/en/latest/topics/commands.html).
 2. **v2**. Agregamos scrapers apuntando a los sitios selecionados.
-3. **v3**. Incorporamos expresiones regulares para segmentación de datos.
+3. **v3**. Enriquecemos los datos.
 4. **v4**. Almacenemos mas datos!!! 🙊
-5. **v5**. Mejoramos la presentación
+5. **v5**. Mejoramos la presentación.
 
 ---
 
@@ -419,7 +419,7 @@ $ cat botiga.json | jq
 
 Ahora si! Tenemos listo nuestro tercer scraper. Y con esto... terminamos la segunda etapa! 🎉🕺
 
-### v3. Incorporamos expresiones regulares para segmentación de datos.
+### v3. Enriquecemos los datos
 
 Primero inicializamos un proyecto nuevo para tener un comienzo mas ordenado:
 
@@ -427,7 +427,7 @@ Primero inicializamos un proyecto nuevo para tener un comienzo mas ordenado:
 scrapy startproject DPaaS_v3
 ```
 
-Lo que buscamos en esta etapa es mejorar los datos que tenemos sobre nuestros items, es decir que queremos convertir esto:
+Lo que buscamos en esta etapa es mejorar los datos que tenemos sobre nuestros items. En la etapa anterior nos enfocamos a obtener los datos mas relevantes de cada item y los guardamos de la siguiente manera:
 
 ```json
 {
@@ -435,7 +435,8 @@ Lo que buscamos en esta etapa es mejorar los datos que tenemos sobre nuestros it
     "price": 1527.99
 }
 ```
-En esto
+
+En esta etapa vamos a buscar transformar esas dos claves en algo mas interesante:
 
 ```json
 {
