@@ -29,8 +29,8 @@ Por ejemplo, el precio por unidad de Pampers Confort XG es `17.29 UYU` (1002.99/
 
 #### Lista de sitios:
 - [panaleraencasa.com](https://panaleraencasa.com/?s=pa%C3%B1al&post_type=product&product_cat=0)
-- [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
 - [pigalle.com.uy](https://www.pigalle.com.uy/bebes_panales-y-toallitas)
+- [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
 
 ## Etapas
 
@@ -279,7 +279,7 @@ Repetimos el mismo proceso pero con pigalle.com.uy, tratando de identificar como
 Ahora interactuamos utilizando el comando `scrapy shell https://www.pigalle.com.uy/bebes_panales-y-toallitas`:
 
 ```python
->>> item = response.xpath("//div[contains(@class, 'item-box')]")
+>>> item = response.xpath("//div[contains(@class, 'item-box')]")[0]
 >>> item.xpath("//h2/text()").get()
 '\r\n\t\t\tBABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]\r\n\t\t'
 >>> item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
@@ -337,3 +337,85 @@ $ cat pigalle.json | jq
   ...
 ]
 ```
+
+## [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
+
+Realizamos el mismo proceso nuevamente con este sitio. Buscamos los contenedores de cada uno de los items para extraer la información.
+
+<img width="1108" alt="Screen Shot 2022-04-09 at 17 37 27" src="https://user-images.githubusercontent.com/20926292/162581059-d6625835-68f5-4c26-8deb-852cb2a462d9.png">
+
+Ahora interactuamos directamente con `scrapy shell` para obtener la data que necesitamos.
+
+```
+>>> item = response.xpath("//div[contains(@class, 'product-info')]")[0]
+>>> item.xpath("//h3[contains(@class, 'product-name')]//text()").get()
+'Babysec Recién Nacido (Hasta 4 Kg) - x20 '
+>>> item.xpath("//span[contains(@class, 'price')]//text()").get()
+'$0,00'
+```
+
+Que raro los precios estan en cero! Hay que revisar de nuevo los datos en el proxy.
+
+<img width="1440" alt="Screen Shot 2022-04-09 at 17 49 36" src="https://user-images.githubusercontent.com/20926292/162581496-1bed2579-9c24-475d-8dc5-cae4cadd0cca.png">
+
+Los precios se cargan via JS, vienen dentro de la respuesta pero estan en un diccionario de javascript. Para extrear esta data vamos a tener que utilizar otra herramienta de nuestra caja: **Expresiones Regulares** (o en inglés, RegEx, de regular expresions).
+
+```
+>>> import re
+>>> re.search("var impressionData = \{(.*)\}", response.text)
+<re.Match object; span=(14236, 28647), match='var impressionData = {"ecommerce":{"currencyCode">
+```
+
+Ahora que segmentamos donde estan los datos, vamos a armar las expresiones regulares que busquen la descriciones y los precios.
+
+```
+>>> data = re.search("var impressionData = \{(.*)\}", response.text).group(1)
+>>> re.findall("\"price\":([0-9\.]+)", data)
+['292.990000000000009094947017729282379150390625', '403.990000000000009094947017729282379150390625', '403.990000000000009094947017729282379150390625', '403.990000000000009094947017729282379150390625', ...]
+>>> re.findall("\"name\":\"([^,]+)\"", data)
+['Babysec Reci\\u00e9n Nacido (Hasta 4 Kg) - x20 ', 'Babysec Ultra G (8.5 a 12 Kg) - x30', 'Babysec Ultra XG (11 a 14 Kg) - x24', 'BabySec Ultra P (Hasta 6 Kg) - x36', 'Babysec Ultra XXG (+13 Kg) - x24', 'Babysec Ultra M (5 a 9.5 Kg) - x34', 'Huggies Primeros 100 D\\u00edas Prematuro (Hasta 2.2 Kg) - x30', 'Babysec Reci\\u00e9n Nacido (Hasta 4 Kg) - x34', 'Babysec Premium XXG (+13 Kg) - x24', ...]
+```
+
+Ahora corremos el scraper con `scrapy crawl`
+
+```bash
+scrapy crawl botiga -O botiga.json
+```
+
+```
+...
+2022-04-09 18:28:03 [scrapy.downloadermiddlewares.robotstxt] DEBUG: Forbidden by robots.txt: <GET https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price>
+```
+
+Ups! Encontramos un error. No podemos ejecutar el scraper porque la URL tiene contenido que esta prohibido crawlear. Para eso debemos ignorar el `robots.txt`. En `settings.py` agregamos lo siguiente:
+
+```python
+ROBOTSTXT_OBEY = False
+```
+
+Probamos una vez mas
+
+```bash
+scrapy crawl botiga -O botiga.json
+```
+
+```json
+$ cat botiga.json | jq
+[
+  {
+    "description": "Babysec Reci\\u00e9n Nacido (Hasta 4 Kg) - x20",
+    "price": 292.99
+  },
+  {
+    "description": "BabySec Ultra P (Hasta 6 Kg) - x36",
+    "price": 403.99
+  },
+  {
+    "description": "Babysec Ultra XXG (+13 Kg) - x24",
+    "price": 403.99
+  },
+  ...
+]
+```
+
+Ahora si! Tenemos listo nuestro tercer scraper. Y con esto... terminamos la segunda etapa! 🎉🕺
