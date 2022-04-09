@@ -286,15 +286,15 @@ Ahora interactuamos utilizando el comando `scrapy shell https://www.pigalle.com.
 '\r\n\t\t\t$1.569\r\n\t\t'
 ```
 
-Genial! Ya tenemos los datos ahora falta averiguar el tema del paginado. Volvemos a la pagina a buscar como se cargan mas elementos.
+Genial! Ya tenemos los datos ahora falta averiguar el tema del paginado. Volvemos a la web a buscar como se cargan mas elementos.
 
 <img width="1111" alt="Screen Shot 2022-04-09 at 17 20 38" src="https://user-images.githubusercontent.com/20926292/162580370-d4d7eb21-d124-4bd0-899d-1e89bd25f5ac.png">
 
-Mmmh ok, vemos que no tenemos boton de siguiente sino que cuando se scrollea para abajo se cargan mas movimientos. Vamos a abrir el proxy, y encontrar como se disparan los eventos. Encontramos que en realidad si hay un botón de siguiente pero se encuentro oculto, por lo tanto podemos probar el mismo metodo que utilizamos en `panalera_en_casa`.
+Vemos que no tenemos botón de siguiente sino que cuando se scrollea para abajo se cargan mas movimientos. Vamos a abrir el proxy, y encontrar como se disparan los eventos. 
 
 <img width="1440" alt="Screen Shot 2022-04-09 at 17 18 54" src="https://user-images.githubusercontent.com/20926292/162580476-ca4644b1-7cc1-4105-8b5a-f222bf193ba4.png">
 
-Funcionó de diez! A continuación podemos ver el scraper completo para este caso:
+Encontramos que en realidad si hay un botón de siguiente pero se encuentra oculto, por lo tanto podemos probar el mismo método que utilizamos en `panalera_en_casa`. Funcionó de diez! A continuación podemos ver el scraper completo para este caso:
 
 ```python
 import scrapy
