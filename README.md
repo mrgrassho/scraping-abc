@@ -338,7 +338,7 @@ $ cat pigalle.json | jq
 ]
 ```
 
-## [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
+### [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
 
 Realizamos el mismo proceso nuevamente con este sitio. Buscamos los contenedores de cada uno de los items para extraer la información.
 
@@ -419,3 +419,37 @@ $ cat botiga.json | jq
 ```
 
 Ahora si! Tenemos listo nuestro tercer scraper. Y con esto... terminamos la segunda etapa! 🎉🕺
+
+### v3. Incorporamos expresiones regulares para segmentación de datos.
+
+Primero inicializamos un proyecto nuevo para tener un comienzo mas ordenado:
+
+```bash
+scrapy startproject DPaaS_v3
+```
+
+Lo que buscamos en esta etapa es mejorar los datos que tenemos sobre nuestros items, es decir que queremos convertir esto:
+
+```json
+{
+    "description": "Huggies Supreme Care XXG (+14 Kg) - x100",
+    "price": 1527.99
+}
+```
+En esto
+
+```json
+{
+    "brand": "huggies",
+    "model": "supreme care",
+    "size": "xxg",
+    "target_kg": {
+        "min": 14,
+        "max": null,
+    },
+    "units": "100",
+    "unit_price": "15.27",
+    "description": "Huggies Supreme Care XXG (+14 Kg) - x100",
+    "price": 1527.99
+}
+```
