@@ -39,9 +39,8 @@ Vamos a empezar de a poco e ir mejorando la solucion en las siguientes iteracion
 1. **v1**. Instalación & presentación de [Scrapy](https://docs.scrapy.org/en/latest/topics/commands.html).
 2. **v2**. Agregamos scrapers apuntando a los sitios selecionados.
 3. **v3**. Incorporamos expresiones regulares para segmentación de datos.
-4. **v4**. Agregamos calculo de precio por unidad.
-5. **v5**. Almacenemos los datos!!! 🙊
-6. **v6**. ¿Y ahora? Armemos una API!
+4. **v4**. Almacenemos mas datos!!! 🙊
+5. **v5**. Mejoramos la presentación
 
 ---
 
@@ -451,5 +450,17 @@ En esto
     "unit_price": "15.27",
     "description": "Huggies Supreme Care XXG (+14 Kg) - x100",
     "price": 1527.99
+}
+```
+
+### v4. Almacenemos mas datos
+
+Todo muy lindo pero como se que item es de que sitio y si me interesa un item como lo busco. En esta etapa vamos a agregar los campos `website` e `item_link`, a continuación un ejemplo:
+
+```
+{
+    ...
+    "website": "bogita.com.uy",
+    "item_link": "https://www.botiga.com.uy/babysec-recien-nacido-hasta-4-5-kg-20-u.html", 
 }
 ```
