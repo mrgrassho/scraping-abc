@@ -272,10 +272,11 @@ class PanaleraEnCasaSpider(scrapy.Spider):
 
 #### [pigalle.com.uy](https://www.pigalle.com.uy/bebes_panales-y-toallitas)
 
+Repetimos el mismo proceso pero con pigalle.com.uy, tratando de identificar como vienen los datos revisando el sitio y utilizando las dev tools del navegador. Para esta etapa también podemos utilizar un proxy tipo MITM (recomiendo [Burp](https://portswigger.net/burp/documentation/desktop/tools/proxy), pero también hay buenas alternativas como ZAP o Charles)
+
 <img width="1108" alt="Screen Shot 2022-04-08 at 23 41 35" src="https://user-images.githubusercontent.com/20926292/162535967-a1626255-b05c-4f09-afcd-f02ac67c9ab2.png">
 
-
-
+Ahora interactuamos utilizando el comando `scrapy shell https://www.pigalle.com.uy/bebes_panales-y-toallitas`:
 
 ```python
 >>> item = response.xpath("//div[contains(@class, 'item-box')]")
@@ -284,6 +285,16 @@ class PanaleraEnCasaSpider(scrapy.Spider):
 >>> item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
 '\r\n\t\t\t$1.569\r\n\t\t'
 ```
+
+Genial! Ya tenemos los datos ahora falta averiguar el tema del paginado. Volvemos a la pagina a buscar como se cargan mas elementos.
+
+<img width="1111" alt="Screen Shot 2022-04-09 at 17 20 38" src="https://user-images.githubusercontent.com/20926292/162580370-d4d7eb21-d124-4bd0-899d-1e89bd25f5ac.png">
+
+Mmmh ok, vemos que no tenemos boton de siguiente sino que cuando se scrollea para abajo se cargan mas movimientos. Vamos a abrir el proxy, y encontrar como se disparan los eventos. Encontramos que en realidad si hay un botón de siguiente pero se encuentro oculto, por lo tanto podemos probar el mismo metodo que utilizamos en `panalera_en_casa`.
+
+<img width="1440" alt="Screen Shot 2022-04-09 at 17 18 54" src="https://user-images.githubusercontent.com/20926292/162580476-ca4644b1-7cc1-4105-8b5a-f222bf193ba4.png">
+
+Funcionó de diez! A continuación podemos ver el scraper completo para este caso:
 
 ```python
 import scrapy
@@ -306,6 +317,7 @@ class PigalleSpider(scrapy.Spider):
             yield response.follow(next_page, self.parse)
 ```
 
+Corremos el scraper con `scrapy crawl pigalle -O pigalle.json`. Luego revisamos si los datos se almacenaron correctamente:
 
 ```json
 $ cat pigalle.json | jq
