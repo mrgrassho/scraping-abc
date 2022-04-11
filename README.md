@@ -421,12 +421,6 @@ Ahora si! Tenemos listo nuestro tercer scraper. Y con esto... terminamos la segu
 
 ### v3. Enriquecemos los datos
 
-Primero inicializamos un proyecto nuevo para tener un comienzo mas ordenado:
-
-```bash
-scrapy startproject DPaaS_v3
-```
-
 Lo que buscamos en esta etapa es mejorar los datos que tenemos sobre nuestros items. En la etapa anterior nos enfocamos a obtener los datos mas relevantes de cada item y los guardamos de la siguiente manera:
 
 ```json
@@ -441,7 +435,6 @@ En esta etapa vamos a buscar transformar esas dos claves en algo mas interesante
 ```json
 {
     "brand": "huggies",
-    "model": "supreme care",
     "size": "xxg",
     "target_kg": {
         "min": 14,
@@ -453,6 +446,42 @@ En esta etapa vamos a buscar transformar esas dos claves en algo mas interesante
     "price": 1527.99
 }
 ```
+
+#### Análisis & Clasificación de datos
+
+Primero inicializamos un proyecto nuevo para tener un comienzo mas ordenado, copiamos los spiders y cambiamos la linea `ROBOTSTXT_OBEY = False` en `settings.py`:
+
+```bash
+scrapy startproject DPaaS_v3
+cp -R DPaaS_v2/DPaaS_v2/spiders DPaaS_v3/DPaaS_v3
+```
+
+Ahora que tenemos la base del proyecto anterior, continuamos con el análisis de cada página web, para ver como podemos extraer los datos utilizando expresiones regulares. Ejecutamos todos los scrapers con el siguiente comando:
+
+```bash
+scrapy list | xargs -I {} -t scrapy crawl {} -O {}.json
+```
+
+La industria pañalera no es precisamente un ambiente de muchos jugadores, haciendo un poco de investigación encontramos las compañías predominantes lo que por nos permite establecer una clasificación de mejor manera.
+
+- **size**, observamos que la categorización de los tamaños no es muy estandar para algunos items por lo que no guiaremos por la siguiente tabla:
+
+|Talles| Huggies| Pampers| Babysec
+|--|--|--|--|
+|PR - Prematuro| Hasta 2.2 kg |-|-
+|RN - Recién nacido|Hasta 4 kg|Hasta 4.5 kg|Hasta 4.5 kg
+|RN - Recién nacido (+)|-|3 a 6 kg|-
+|P - Pequeño|3.5 a 6 kg|5 a 7.5 kg|hasta 6 kg
+|M - Mediano|5.5 a 9.5 kg|6 a 9.5 kg|5 a 9.5 kg
+|G - Grande|9 a 12.5 kg|9 a 12 kg|8.5 a 12 kg
+|XG - Extra Grande|12 a 15 kg|12 a 15 kg|11 a 14 kg
+|XXG - Extra Extra Grande|más de 14 kg|más de 14 kg|más de 13 kg
+
+> Fuente: https://www.donmasivo.com/talles-de-panales/, solo se modifico `Prematuto` agregando `PR` para seguir con la nomenclatura.
+
+#### ¿Qué utilidad tiene utilizar una tabla para los tamaños?
+
+Nos evita depender de que el vendedor informe o no los kilogramos para cada item, de esta manera podemos guiarnos directamente por el talle para obtener los pesos. Además que transformar una descripción como `Hasta 6kg` en `{'min': null, 'max': 6}` no es una tarea sencilla a primera vista.
 
 ### v4. Almacenemos mas datos
 
