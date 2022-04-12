@@ -279,9 +279,9 @@ Ahora interactuamos utilizando el comando `scrapy shell https://www.pigalle.com.
 
 ```python
 >>> item = response.xpath("//div[contains(@class, 'item-box')]")[0]
->>> item.xpath("//h2/text()").get()
+>>> item.xpath(".//h2/text()").get()
 '\r\n\t\t\tBABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]\r\n\t\t'
->>> item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
+>>> item.xpath(".//div[contains(@class, 'prod-box__current-price')]/text()").get()
 '\r\n\t\t\t$1.569\r\n\t\t'
 ```
 
@@ -306,9 +306,9 @@ class PigalleSpider(scrapy.Spider):
 
     def parse(self, response):
         for item in response.xpath("//div[contains(@class, 'item-box')]"):
-            price = item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
+            price = item.xpath(".//div[contains(@class, 'prod-box__current-price')]/text()").get()
             yield {
-                "description": item.xpath("//h2/text()").get().strip(),
+                "description": item.xpath(".//h2/text()").get().strip(),
                 "price": float(price.strip().replace(".", "").replace("$",""))
             }
         next_page = response.xpath("//li[@class='next-page']/a/@href").get()
@@ -326,12 +326,12 @@ $ cat pigalle.json | jq
     "price": 1569
   },
   {
-    "description": "BABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]",
-    "price": 1569
+    "description": "BABYSEC PACK BIENVENIDA PAÑAL RN [80 uni.]",
+    "price": 1001
   },
   {
-    "description": "BABYSEC PACK BIENVENIDA PAÑAL RN + PAÑAL P + TOALLITAS HUMEDAS 3 uni. [40+40+80 uni.]",
-    "price": 1569
+    "description": "BABYSEC PACK BIENVENIDA PAÑAL P [80 uni.]",
+    "price": 1201
   },
   ...
 ]
@@ -392,7 +392,29 @@ Ups! Encontramos un error. No podemos ejecutar el scraper porque la URL tiene co
 ROBOTSTXT_OBEY = False
 ```
 
-Probamos una vez mas
+Nuestro scraper completo luce algo asi:
+
+```python
+import re
+import scrapy
+
+
+class BotigaSpider(scrapy.Spider):
+    name = 'botiga'
+    start_urls = ['https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price']
+
+    def parse(self, response):
+        data = re.search("var impressionData = \{(.*)\}", response.text).group(1)
+        descriptions = re.findall("\"name\":\"([^,]+)\"", data)
+        prices = re.findall("\"price\":([0-9\.]+)", data)
+        for description, price in zip(descriptions, prices):
+            yield {
+                "description": description.strip(),
+                "price": float(price)
+            }
+```
+
+Ahora que tenemos listo nuestro codigo, probamos listar esos pañales...
 
 ```bash
 scrapy crawl botiga -O botiga.json
@@ -417,7 +439,7 @@ $ cat botiga.json | jq
 ]
 ```
 
-Ahora si! Tenemos listo nuestro tercer scraper. Y con esto... terminamos la segunda etapa! 🎉🕺
+Ahora si! Tenemos listo nuestro tercer scraper. Y con esto, terminamos la segunda etapa! 🎉🕺
 
 ### v3. Enriquecemos los datos
 
@@ -440,8 +462,8 @@ En esta etapa vamos a buscar transformar esas dos claves en algo mas interesante
         "min": 14,
         "max": null,
     },
-    "units": "100",
-    "unit_price": "15.27",
+    "units": 100,
+    "unit_price": 15.27,
     "description": "Huggies Supreme Care XXG (+14 Kg) - x100",
     "price": 1527.99
 }
@@ -462,9 +484,9 @@ Ahora que tenemos la base del proyecto anterior, continuamos con el análisis de
 scrapy list | xargs -I {} -t scrapy crawl {} -O {}.json
 ```
 
-La industria pañalera no es precisamente un ambiente de muchos jugadores, haciendo un poco de investigación encontramos las compañías predominantes lo que por nos permite establecer una clasificación de mejor manera.
+La industria pañalera no es precisamente un ambiente de muchos jugadores, haciendo un poco de investigación encontramos las compañías predominantes lo que  nos permite establecer una clasificación mas acotada. Entre los atributos dificiles de obtener tenemos `size`, donde observamos que la categorización de los tamaños no es muy estandar para algunos items y depende de la marca por lo tanto nos guiaremos con la siguiente tabla.
 
-- **size**, observamos que la categorización de los tamaños no es muy estandar para algunos items por lo que no guiaremos por la siguiente tabla:
+##### Tabla de talles de pañales
 
 |Talles| Huggies| Pampers| Babysec
 |--|--|--|--|
@@ -479,9 +501,223 @@ La industria pañalera no es precisamente un ambiente de muchos jugadores, hacie
 
 > Fuente: https://www.donmasivo.com/talles-de-panales/, solo se modifico `Prematuto` agregando `PR` para seguir con la nomenclatura.
 
-#### ¿Qué utilidad tiene utilizar una tabla para los tamaños?
+##### ¿Qué utilidad tiene utilizar una tabla para los tamaños?
 
 Nos evita depender de que el vendedor informe o no los kilogramos para cada item, de esta manera podemos guiarnos directamente por el talle para obtener los pesos. Además que transformar una descripción como `Hasta 6kg` en `{'min': null, 'max': 6}` no es una tarea sencilla a primera vista.
+
+##### Normalización de datos
+
+En algunos casos es necesario aplicar una normalización o limpieza sobre los datos ya que tenemos items de este estilo:
+
+- `Babysec Recién Nacido (Hasta 4 Kg) - x20` debería ser `Babysec RN (Hasta 4 Kg) - x20`
+- `Babysec Prematuro (Hasta 4 Kg) - x20` debería ser `Babysec PR (Hasta 2.2 Kg) - x30`
+- `Hugies XGG x20` debería ser `Huggies XGG x20` 
+- `Huggies GRANDE x20` debería ser `Huggies G x20`
+
+##### Análisis de descripciones
+
+Encontramos un patrón para detectar si se trata de un item pañal, el mismo respeta el siguiente esquema `BRAND ... SIZE ... UNITS_1 o UNITS_2`, si hilamos cada grupo:
+
+- `BRAND` donde los valores posibles son `huggies`, `pampers`, `babysec`
+- `SIZE` donde los valores posibles son `pr`, `rn`, `p`, `m`, `g`, `xg`, `xgg` (también asi `xg/xxg`, pero en este caso se elige la ultima)
+- `UNITS_1` donde tenemos las unidades de la siguiente forma `x100` o `x 100`
+- `UNITS_2` donde tenemos las unidades de la siguiente forma `[100 uni.]`
+
+Traducimos estos posibles valores a expresiónes regulares en python:
+
+```python
+brand = "(?P<brand>huggies|pampers|babysec)"
+size = "\s(pr|rn|p|m|g|xg|xxg)*\s*(\\/|\-)*\s*(?P<size>pr|rn|p|m|g|xg|xxg)"
+units_label_1 = "x\s*(?P<units>[0-9]+)"
+units_label2 = "\[(?P<units>[0-9]+)\s*uni.\]"
+DIAPERS_REGEX = [
+    f".*{brand}.*{size}.*{units_label_1}",
+    f".*{brand}.*{size}.*{units_label2}",
+]
+```
+
+> Estas constantes las definimos en el archivo `DPaaS_v3/DPaaS_v3/constants.py`
+
+
+#### Item pipeline
+
+En la siguiente sección armaremos paso a paso, el pipeline de items para extraer los datos que nos interesan para asi formar la estructura que describimos [aqui](#v3-enriquecemos-los-datos)
+
+##### Intro
+
+Comenzamos con una introducción a los pipelines. Un item pipeline no es mas que un filtro que se aplicará a todos los items scrapeados. Por ejemplo, a continuación mostramos un pipeline que elimina todos los elementos que no tiene el atributo `price` definido, y para los que si tiene definidos le agrega otro campo `tax`:
+
+```python
+from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
+
+class SomePipeline:
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        price = adapter.get("price")
+        if not price:
+            raise DropItem(f"Missing data in {item}")
+        adapter['tax'] = price * 0.07
+        return item
+```
+
+##### Diaper Pipeline
+
+Es sencillo es armar un pipeline, el tema se complica a medida que tengamos que realizar mas modificaciones, para nuestro caso, primero definamos el pipeline y eliminemos aquellos items que no tengan `price` o `description`.
+
+```python
+from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
+
+class DiaperPipeline:
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        description = adapter.get("description")
+        price = adapter.get("price")
+        if description and price:
+            return item
+        raise DropItem(f"Missing data in {item}")
+```
+
+Ahora enfoquemosnos en la transformación que tenemos que hacer a los datos que estudiamos en [seccion normalización de datos](#normalización-de-datos). Para realizar ese preprocesamiento de los datos la manera mas sencilla que se me ocurrio es definir un diccionario `REPLACEMENTS` y recorrerlo en busqueda de los valores a reemplazar.
+
+```python
+import re
+
+# ...
+
+REPLACEMENTS = {
+    "pr": ["prematuro"],
+    "rn": ["reci.*n nacido"],
+    "huggies": ["hugies"],
+    "g": ["grande"],
+}
+
+class DiaperPipeline:
+
+    def _clean_description(self, description):
+        description = description.lower()
+        for value, expressions in REPLACEMENTS.items():
+            for expresion in expressions:
+                if re.search(expresion, description):
+                    description = re.sub(expresion, value, description)
+                    break
+        return description
+
+# ...
+```
+
+Utilizamos la funciones `re.search` para buscar que la expresion se encuentre en la descripción y si es asi reemplazamos con `re.sub`, luego rompemos el for con `break` para que deje de reemplazar esa expresion. Es decir basta con realizar un reemplazo de la lista para pasar a la siguiente expresión.
+
+Ahora armamos la función para matchear los items utilizando las Regex definidas en [análisis de descripciones](#análisis-de-descripciones).
+
+```python
+import re
+
+from .constants import DIAPERS_REGEX
+
+class DiaperPipeline:
+
+# ...
+
+    def _extract_data(self, description):
+        for expresion in DIAPERS_REGEX:
+            match = re.match(expresion, description)
+            if match:
+                return match
+        return None
+```
+
+Ya tenemos todas nuestras funciones ahora realicemos las modificaciones al método `process_item`:
+
+```python
+import re
+from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
+
+from .constants import DIAPER_SIZES, DIAPERS_REGEX
+
+REPLACEMENTS = {
+    "pr": ["prematuro"],
+    "rn": ["reci.*n nacido"],
+    "huggies": ["hugies"],
+    "g": ["grande"],
+}
+
+class DiaperPipeline:
+
+    def _clean_description(self, description):
+        description = description.lower()
+        for value, expressions in REPLACEMENTS.items():
+            for expresion in expressions:
+                if re.search(expresion, description):
+                    description = re.sub(expresion, value, description)
+                    break
+        return description
+
+    def _extract_data(self, description):
+        for expresion in DIAPERS_REGEX:
+            match = re.match(expresion, description)
+            if match:
+                return match
+        return None
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        description = adapter.get("description")
+        price = adapter.get("price")
+        if description and price:
+            description = self._clean_description(description)
+            match = self._extract_data(description)
+            if not match:
+                return item
+            brand = match.group("brand")
+            size = match.group("size")
+            units = int(match.group("units"))
+            adapter['description'] = description
+            adapter['brand'] = brand
+            adapter['size'] = size
+            adapter['target_kg'] = DIAPER_SIZES.get(brand, {}).get(size)
+            adapter['units'] = units
+            adapter['unit_price'] = price / units if units else None
+            return item
+        raise DropItem(f"Missing data in {item}")
+```
+
+Por último en el archivo `DPaaS_v3/DPaaS_v3/constants.py`, donde definiremos la [tabla de talles](#tabla-de-talles-de-pañales).
+
+```python
+DIAPER_SIZES = {
+    "huggies": {
+        "pr": {"min": None, "max": 2.2},
+        "rn": {"min": None, "max": 4},
+        "p": {"min": 3.5, "max": 6},
+        "m": {"min": 5.5, "max": 9.5},
+        "g": {"min": 9, "max": 12.5},
+        "xg": {"min": 12, "max": 15},
+        "xxg": {"min": 14, "max": None},
+    },
+    "pampers": {
+        "rn": {"min": None, "max": 4.5},
+        "rn+": {"min": 3, "max": 6},
+        "p": {"min": 5, "max": 7.5},
+        "m": {"min": 6, "max": 9.5},
+        "g": {"min": 9, "max": 12},
+        "xg": {"min": 12, "max": 15},
+        "xxg": {"min": 14, "max": None},
+    },
+    "babysec": {
+        "rn": {"min": None, "max": 4.5},
+        "p": {"min": None, "max": 6},
+        "m": {"min": 5, "max": 9.5},
+        "g": {"min": 8.5, "max": 12},
+        "xg": {"min": 11, "max": 15},
+        "xxg": {"min": 13, "max": None},
+    },
+}
+```
+
+
 
 ### v4. Almacenemos mas datos
 
