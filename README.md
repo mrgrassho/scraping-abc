@@ -484,7 +484,7 @@ Ahora que tenemos la base del proyecto anterior, continuamos con el análisis de
 scrapy list | xargs -I {} -t scrapy crawl {} -O {}.json
 ```
 
-La industria pañalera no es precisamente un ambiente de muchos jugadores, haciendo un poco de investigación encontramos las compañías predominantes lo que  nos permite establecer una clasificación mas acotada. Entre los atributos dificiles de obtener tenemos `size`, donde observamos que la categorización de los tamaños no es muy estandar para algunos items y depende de la marca por lo tanto nos guiaremos con la siguiente tabla.
+La industria pañalera no es precisamente un ambiente de muchos jugadores, haciendo un poco de investigación encontramos las compañías predominantes. Esto que  nos permite establecer una clasificación mas acotada. Además, ayuda a establer una categorización de tamaños más estandar ya que es un atributo que depende de la marca típicamente.
 
 ##### Tabla de talles de pañales
 
