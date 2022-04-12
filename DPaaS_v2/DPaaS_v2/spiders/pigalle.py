@@ -8,9 +8,9 @@ class PigalleSpider(scrapy.Spider):
 
     def parse(self, response):
         for item in response.xpath("//div[contains(@class, 'item-box')]"):
-            price = item.xpath("//div[contains(@class, 'prod-box__current-price')]/text()").get()
+            price = item.xpath(".//div[contains(@class, 'prod-box__current-price')]/text()").get()
             yield {
-                "description": item.xpath("//h2/text()").get().strip(),
+                "description": item.xpath(".//h2/text()").get().strip(),
                 "price": float(price.strip().replace(".", "").replace("$",""))
             }
         next_page = response.xpath("//li[@class='next-page']/a/@href").get()
