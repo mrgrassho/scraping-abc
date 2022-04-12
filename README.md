@@ -365,7 +365,7 @@ Los precios se cargan via JS, vienen dentro de la respuesta pero estan en un dic
 <re.Match object; span=(14236, 28647), match='var impressionData = {"ecommerce":{"currencyCode">
 ```
 
-Ahora que segmentamos donde estan los datos, vamos a armar las expresiones regulares que busquen la descriciones y los precios.
+Ahora que segmentamos donde estan los datos, vamos a armar las expresiones regulares que busquen la descripciones y los precios.
 
 ```
 >>> data = re.search("var impressionData = \{(.*)\}", response.text).group(1)
