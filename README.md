@@ -513,6 +513,7 @@ En algunos casos es necesario aplicar una normalización o limpieza sobre los da
 - `Babysec Prematuro (Hasta 4 Kg) - x20` debería ser `Babysec PR (Hasta 2.2 Kg) - x30`
 - `Hugies XGG x20` debería ser `Huggies XGG x20` 
 - `Huggies GRANDE x20` debería ser `Huggies G x20`
+- `Huggies S-M x20` debería ser `Huggies M x20` ya que no tenemos talle `S`
 
 ##### Análisis de descripciones
 
@@ -527,7 +528,7 @@ Traducimos estos posibles valores a expresiónes regulares en python:
 
 ```python
 brand = "(?P<brand>huggies|pampers|babysec)"
-size = "\s(pr|rn|p|m|g|xg|xxg)*\s*(\\/|\-)*\s*(?P<size>pr|rn|p|m|g|xg|xxg)"
+size = "\s(pr|rn|p|m|g|xg|xxg)*\s*(\\\/|\-)*\s*(?P<size>pr|rn|p|m|g|xg|xxg)"
 units_label_1 = "x\s*(?P<units>[0-9]+)"
 units_label2 = "\[(?P<units>[0-9]+)\s*uni.\]"
 DIAPERS_REGEX = [
@@ -587,10 +588,11 @@ import re
 # ...
 
 REPLACEMENTS = {
-    "pr": ["prematuro"],
-    "rn": ["reci.*n nacido"],
-    "huggies": ["hugies"],
-    "g": ["grande"],
+    "pr": [r"prematuro"],
+    "rn": [r"reci.*n nacido"],
+    "huggies": [r"hugies"],
+    "g": [r"grande"],
+    "m": [r"s\-m"],
 }
 
 class DiaperPipeline:
@@ -670,7 +672,7 @@ class DiaperPipeline:
             description = self._clean_description(description)
             match = self._extract_data(description)
             if not match:
-                return item
+                raise DropItem(f"Not a diaper - {item}")
             brand = match.group("brand")
             size = match.group("size")
             units = int(match.group("units"))
@@ -717,7 +719,236 @@ DIAPER_SIZES = {
 }
 ```
 
+Ahora que tenemos todo listo, probemos los scrapers!!
 
+
+```bash
+scrapy list | xargs -I {} -t scrapy crawl {} -O {}.json
+```
+
+```json
+$ cat botiga.json | jq 
+[
+
+  {
+    "description": "huggies supreme care g (9 a 12.5 kg) - x120",
+    "price": 1527.99,
+    "brand": "huggies",
+    "size": "g",
+    "target_kg": {
+      "min": 9,
+      "max": 12.5
+    },
+    "units": 120,
+    "unit_price": 12.73325
+  },
+  {
+    "description": "pampers confort sec forte bag xg (11 a 15 kg) x116",
+    "price": 1734.99,
+    "brand": "pampers",
+    "size": "xg",
+    "target_kg": {
+      "min": 12,
+      "max": 15
+    },
+    "units": 116,
+    "unit_price": 14.956810344827586
+  },
+  {
+    "description": "pampers confort sec forte bag m (6 a 10 kg) x148",
+    "price": 1734.99,
+    "brand": "pampers",
+    "size": "m",
+    "target_kg": {
+      "min": 6,
+      "max": 9.5
+    },
+    "units": 148,
+    "unit_price": 11.722905405405406
+  },
+  {
+    "description": "pampers confort sec forte bag xxg (+14 kg) x112",
+    "price": 1734.99,
+    "brand": "pampers",
+    "size": "xxg",
+    "target_kg": {
+      "min": 14,
+      "max": null
+    },
+    "units": 112,
+    "unit_price": 15.490982142857144
+  },
+  ...
+]
+```
+
+```json
+$ cat pigalle.json | jq 
+[
+    {
+    "description": "pampers confort sec g g 9a13kg [60 uni.]",
+    "price": 799,
+    "brand": "pampers",
+    "size": "g",
+    "target_kg": {
+      "min": 9,
+      "max": 12
+    },
+    "units": 60,
+    "unit_price": 13.316666666666666
+  },
+  {
+    "description": "pampers confort sec medio m 6a10kg [70 uni.]",
+    "price": 799,
+    "brand": "pampers",
+    "size": "m",
+    "target_kg": {
+      "min": 6,
+      "max": 9.5
+    },
+    "units": 70,
+    "unit_price": 11.414285714285715
+  },
+  {
+    "description": "pampers confort sec pequeño p 5a8kg [72 uni.]",
+    "price": 1411,
+    "brand": "pampers",
+    "size": "p",
+    "target_kg": {
+      "min": 5,
+      "max": 7.5
+    },
+    "units": 72,
+    "unit_price": 19.59722222222222
+  },
+  {
+    "description": "pampers confort sec rn hasta 6kg [36 uni.]",
+    "price": 484,
+    "brand": "pampers",
+    "size": "rn",
+    "target_kg": {
+      "min": null,
+      "max": 4.5
+    },
+    "units": 36,
+    "unit_price": 13.444444444444445
+  },
+  {
+    "description": "pampers confort sec xg xg 11a15kg [116 uni.]",
+    "price": 1825,
+    "brand": "pampers",
+    "size": "xg",
+    "target_kg": {
+      "min": 12,
+      "max": 15
+    },
+    "units": 116,
+    "unit_price": 15.732758620689655
+  }
+  ...
+]
+```
+
+```json
+$ cat panalera_en_casa.json | jq 
+[
+  ...
+  {
+    "description": "pampers confort sec paquetazo gx128 (9-12.5kg)",
+    "price": 1751,
+    "brand": "pampers",
+    "size": "g",
+    "target_kg": {
+      "min": 9,
+      "max": 12
+    },
+    "units": 128,
+    "unit_price": 13.6796875
+  },
+  {
+    "description": "pampers confort sec paquetazo mx148 (6-9.5kg)",
+    "price": 1751,
+    "brand": "pampers",
+    "size": "m",
+    "target_kg": {
+      "min": 6,
+      "max": 9.5
+    },
+    "units": 148,
+    "unit_price": 11.83108108108108
+  },
+  {
+    "description": "pampers confort sec paquetazo xgx116 (12-15kg)",
+    "price": 1751,
+    "brand": "pampers",
+    "size": "xg",
+    "target_kg": {
+      "min": 12,
+      "max": 15
+    },
+    "units": 116,
+    "unit_price": 15.094827586206897
+  },
+  {
+    "description": "pampers confort sec paquetazo xxgx112 (+14kg)",
+    "price": 1751,
+    "brand": "pampers",
+    "size": "xxg",
+    "target_kg": {
+      "min": 14,
+      "max": null
+    },
+    "units": 112,
+    "unit_price": 15.633928571428571
+  },
+  {
+    "description": "babysec classic plus gx40",
+    "price": 416,
+    "brand": "babysec",
+    "size": "g",
+    "target_kg": {
+      "min": 8.5,
+      "max": 12
+    },
+    "units": 40,
+    "unit_price": 10.4
+  },
+  {
+    "description": "huggies primeros 100 días natural care rnx34",
+    "price": 477,
+    "brand": "huggies",
+    "size": "rn",
+    "target_kg": {
+      "min": null,
+      "max": 4
+    },
+    "units": 34,
+    "unit_price": 14.029411764705882
+  },
+  {
+    "description": "huggies primeros 100 días natural care px34",
+    "price": 374,
+    "brand": "huggies",
+    "size": "p",
+    "target_kg": {
+      "min": 3.5,
+      "max": 6
+    },
+    "units": 34,
+    "unit_price": 11
+  }
+]
+```
+
+Todo perfecto! Ahora analicemos las tasa de dropeo de items:
+
+|Sitio| item_scraped_count |  item_dropped_count | Efectividad (%)
+|--|--|--|--|
+| `botiga.com.uy` | 57 | 0 | 100%
+| `panaleraencasa.com` |60|5| 92.3%
+| `pigalle.com.uy` |57|29| 66.27%
+
+> Solo a destacar en los resultados puede haber items que no esperabamos como por ejemplo pañales para adultos (`PLENITUD Protect Gx32 (100-140cm)`) o toallitas para bebes, estos casos los eliminamos.
 
 ### v4. Almacenemos mas datos
 
