@@ -967,6 +967,9 @@ Incorporamos los atributos cada sitio siguiendo el mismo procedimiento de siempr
 
 #### [panaleraencasa.com](https://panaleraencasa.com/?s=pa%C3%B1al&post_type=product&product_cat=0)
 
+En este caso la incorporación de `image` y `url` no es muy costosa, ya que estos datos se encuentra o dentro del contenedor `item` o un nivel mas arriba. Este último caso vale la pena hacerle mención, ya que utilizamos `../` en `./..//img/@src` para subir un nivel por fuera del contenedor.
+
+A continuación, mostramos el resultado completo:
 
 ```python
 import scrapy
@@ -994,6 +997,10 @@ class PanaleraEnCasaSpider(scrapy.Spider):
 
 #### [pigalle.com.uy](https://www.pigalle.com.uy/bebes_panales-y-toallitas)
 
+Este caso es el mas simple, lo unico que hay para destacar es que se utiliza `response.urljoin` ya que uno de los resultados tiene la url relativa.
+
+A continuación, mostramos el resultado completo:
+
 ```python
 import scrapy
 
@@ -1020,6 +1027,10 @@ class PigalleSpider(scrapy.Spider):
 ```
 
 #### [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
+
+Este caso es bastante particular porque debemos obtener `image` y `url` de otra fuente ya que estos datos no se encuentran dentro del JSON de datos, pero si se encuentran en el html, para ello los extraemos utilizando `response.xpath(...)`.
+
+A continuación, mostramos el resultado completo:
 
 ```python
 import re
