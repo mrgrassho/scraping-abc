@@ -6,7 +6,7 @@
 import scrapy
 
 
-class DpaasV4Item(scrapy.Item):
+class DpaasV5Item(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     pass

@@ -1,4 +1,4 @@
-# Scrapy settings for DPaaS_v4 project
+# Scrapy settings for DPaaS_v5 project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,14 +7,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'DPaaS_v4'
+BOT_NAME = 'DPaaS_v5'
 
-SPIDER_MODULES = ['DPaaS_v4.spiders']
-NEWSPIDER_MODULE = 'DPaaS_v4.spiders'
+SPIDER_MODULES = ['DPaaS_v5.spiders']
+NEWSPIDER_MODULE = 'DPaaS_v5.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'DPaaS_v4 (+http://www.yourdomain.com)'
+#USER_AGENT = 'DPaaS_v5 (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -45,13 +45,13 @@ ROBOTSTXT_OBEY = False
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'DPaaS_v4.middlewares.DpaasV4SpiderMiddleware': 543,
+#    'DPaaS_v5.middlewares.DpaasV5SpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'DPaaS_v4.middlewares.DpaasV4DownloaderMiddleware': 543,
+#    'DPaaS_v5.middlewares.DpaasV5DownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -63,7 +63,7 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'DPaaS_v4.pipelines.DiaperPipeline': 300,
+   'DPaaS_v5.pipelines.DiaperPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
