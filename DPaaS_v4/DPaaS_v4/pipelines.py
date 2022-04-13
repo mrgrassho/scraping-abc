@@ -5,7 +5,6 @@
 
 
 # useful for handling different item types with a single interface
-from asyncio.log import logger
 import re
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
