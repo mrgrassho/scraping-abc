@@ -11,7 +11,10 @@ class PanaleraEnCasaSpider(scrapy.Spider):
             price = item.xpath(".//span[@class='price']/span/text()").get()
             yield {
                 "description": item.xpath(".//a[1]/text()").get(),
-                "price": float(price.replace(",",""))
+                "price": float(price.replace(",","")),
+                "image": item.xpath("./..//img/@src").get(),
+                "url": item.xpath(".//a[1]/@href").get(),
+                "website": self.allowed_domains[0],
             }
         next_page = response.xpath("//a[contains(@class, 'next')]/@href").get()
         if next_page is not None:

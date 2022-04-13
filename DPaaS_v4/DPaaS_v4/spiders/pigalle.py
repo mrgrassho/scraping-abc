@@ -11,7 +11,10 @@ class PigalleSpider(scrapy.Spider):
             price = item.xpath(".//div[contains(@class, 'prod-box__current-price')]/text()").get()
             yield {
                 "description": item.xpath(".//h2/text()").get().strip(),
-                "price": float(price.strip().replace(".", "").replace("$",""))
+                "price": float(price.strip().replace(".", "").replace("$","")),
+                "url": response.urljoin(item.xpath(".//a[1]/@href").get()),
+                "image": item.xpath(".//img/@src").get(),
+                "website": self.allowed_domains[0],
             }
         next_page = response.xpath("//li[@class='next-page']/a/@href").get()
         if next_page is not None:

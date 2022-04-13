@@ -58,6 +58,6 @@ class DiaperPipeline:
             adapter['size'] = size
             adapter['target_kg'] = DIAPER_SIZES.get(brand, {}).get(size)
             adapter['units'] = units
-            adapter['unit_price'] = price / units if units else None
+            adapter['unit_price'] = round(price / units, 2) if units else None
             return item
         raise DropItem(f"Missing data in {item}")
