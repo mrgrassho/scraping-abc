@@ -337,7 +337,7 @@ $ cat pigalle.json | jq
 ]
 ```
 
-### [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
+#### [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
 
 Realizamos el mismo proceso nuevamente con este sitio. Buscamos los contenedores de cada uno de los items para extraer la información.
 
@@ -952,12 +952,110 @@ Todo perfecto! Ahora analicemos las tasa de dropeo de items:
 
 ### v4. Almacenemos mas datos
 
-Todo muy lindo pero como se que item es de que sitio y si me interesa un item como lo busco. En esta etapa vamos a agregar los campos `website` e `item_link`, a continuación un ejemplo:
+Todo muy lindo pero como se que item es de que sitio y si me interesa un item como lo busco. En esta etapa vamos a agregar los campos `website`, `url` e `image`. A continuación un ejemplo:
 
 ```
 {
     ...
     "website": "bogita.com.uy",
-    "item_link": "https://www.botiga.com.uy/babysec-recien-nacido-hasta-4-5-kg-20-u.html", 
+    "url": "https://www.botiga.com.uy/babysec-recien-nacido-hasta-4-5-kg-20-u.html", 
+    "image": "https://www.pigalle.com.uy/content/images/thumbs/0017361_babysec-pack-bienvenida-panal-rn-panal-p-toallitas-humedas-3-uni-404080-uni_280.jpeg", 
 }
+```
+
+Incorporamos los atributos cada sitio siguiendo el mismo procedimiento de siempre: primero interactuamos con la response en un browser, luego utilizamos `scrapy shell` para armar parte del codigo en python, por último validamos con `scrapy crawl <scraper_name> -O out.json`
+
+#### [panaleraencasa.com](https://panaleraencasa.com/?s=pa%C3%B1al&post_type=product&product_cat=0)
+
+En este caso la incorporación de `image` y `url` no es muy costosa, ya que estos datos se encuentran dentro del contenedor `item` o un nivel mas arriba. Este último caso vale la pena hacerle mención, ya que utilizaremos `../` en `./..//img/@src` para subir un nivel en el arbol HTML.
+
+A continuación, mostramos el resultado completo:
+
+```python
+import scrapy
+
+
+class PanaleraEnCasaSpider(scrapy.Spider):
+    name = 'panalera_en_casa'
+    allowed_domains = ['panaleraencasa.com']
+    start_urls = ['https://panaleraencasa.com/?s=pa%C3%B1al&post_type=product&product_cat=0']
+
+    def parse(self, response):
+        for item in response.xpath("//div[@class='product-information']"):
+            price = item.xpath(".//span[@class='price']/span/text()").get()
+            yield {
+                "description": item.xpath(".//a[1]/text()").get(),
+                "price": float(price.replace(",","")),
+                "image": item.xpath("./..//img/@src").get(),
+                "url": item.xpath(".//a[1]/@href").get(),
+                "website": self.allowed_domains[0],
+            }
+        next_page = response.xpath("//a[contains(@class, 'next')]/@href").get()
+        if next_page is not None:
+            yield response.follow(next_page, self.parse)
+```
+
+#### [pigalle.com.uy](https://www.pigalle.com.uy/bebes_panales-y-toallitas)
+
+Este caso es el mas simple, lo único que hay para destacar es que se utiliza `response.urljoin` ya que uno de los resultados tiene la url relativa.
+
+A continuación, mostramos el resultado completo:
+
+```python
+import scrapy
+
+
+class PigalleSpider(scrapy.Spider):
+    name = 'pigalle'
+    allowed_domains = ['www.pigalle.com.uy']
+    start_urls = ['https://www.pigalle.com.uy/bebes_panales-y-toallitas']
+
+    def parse(self, response):
+        for item in response.xpath("//div[contains(@class, 'item-box')]"):
+            price = item.xpath(".//div[contains(@class, 'prod-box__current-price')]/text()").get()
+            yield {
+                "description": item.xpath(".//h2/text()").get().strip(),
+                "price": float(price.strip().replace(".", "").replace("$","")),
+                "url": response.urljoin(item.xpath(".//a[1]/@href").get()),
+                "image": item.xpath(".//img/@src").get(),
+                "website": self.allowed_domains[0],
+            }
+        next_page = response.xpath("//li[@class='next-page']/a/@href").get()
+        if next_page is not None:
+            yield response.follow(next_page, self.parse)
+
+```
+
+#### [botiga.com](https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price)
+
+Este caso es bastante particular porque debemos obtener `image` y `url` de otra fuente ya que estos no se encuentran dentro del JSON de datos, para ello los extraemos utilizando `response.xpath(...)` y luego mergeamos las listas utilizando `zip([1,2], ["a", "b"], ...)`.
+
+A continuación, mostramos el resultado completo:
+
+```python
+import re
+
+import scrapy
+
+
+class BotigaSpider(scrapy.Spider):
+    name = 'botiga'
+    allowed_domains = ['www.botiga.com.uy']
+    start_urls = ['https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price']
+
+    def parse(self, response):
+        data = re.search("var impressionData = \{(.*)\}", response.text).group(1)
+        descriptions = re.findall("\"name\":\"([^,]+)\"", data)
+        prices = re.findall("\"price\":([0-9\.]+)", data)
+        images = response.xpath("//li[contains(@class, 'item')]//img/@src").getall()
+        urls = response.xpath("//h3[@class='product-name']/a/@href").getall()
+        for description, price, image, url in zip(descriptions, prices, images, urls):
+            yield {
+                "description": description.strip(),
+                "price": float(price),
+                "image": image,
+                "url": url,
+                "website": self.allowed_domains[0],
+            }
+
 ```
