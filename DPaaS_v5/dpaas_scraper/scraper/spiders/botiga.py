@@ -7,6 +7,10 @@ class BotigaSpider(scrapy.Spider):
     name = 'botiga'
     allowed_domains = ['www.botiga.com.uy']
     start_urls = ['https://www.botiga.com.uy/panales-en-oferta-bebes.html?dir=asc&order=price']
+    custom_settings = {
+        # 'LOG_FILE': 'logs/botiga.log',
+        'LOG_LEVEL': 'DEBUG'
+    }
 
     def parse(self, response):
         data = re.search("var impressionData = \{(.*)\}", response.text).group(1)

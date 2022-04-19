@@ -5,6 +5,10 @@ class PanaleraEnCasaSpider(scrapy.Spider):
     name = 'panalera_en_casa'
     allowed_domains = ['panaleraencasa.com']
     start_urls = ['https://panaleraencasa.com/?s=pa%C3%B1al&post_type=product&product_cat=0']
+    custom_settings = {
+        # 'LOG_FILE': 'logs/panalera_en_casa.log',
+        'LOG_LEVEL': 'DEBUG'
+    }
 
     def parse(self, response):
         for item in response.xpath("//div[@class='product-information']"):

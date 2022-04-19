@@ -5,6 +5,10 @@ class PigalleSpider(scrapy.Spider):
     name = 'pigalle'
     allowed_domains = ['www.pigalle.com.uy']
     start_urls = ['https://www.pigalle.com.uy/bebes_panales-y-toallitas']
+    custom_settings = {
+        # 'LOG_FILE': 'logs/pigalle.log',
+        'LOG_LEVEL': 'DEBUG'
+    }
 
     def parse(self, response):
         for item in response.xpath("//div[contains(@class, 'item-box')]"):

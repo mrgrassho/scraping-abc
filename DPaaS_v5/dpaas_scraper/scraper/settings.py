@@ -1,4 +1,4 @@
-# Scrapy settings for DPaaS_v5 project
+# Scrapy settings for scraper project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,14 +7,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'DPaaS_v5'
+BOT_NAME = 'scraper'
 
-SPIDER_MODULES = ['DPaaS_v5.spiders']
-NEWSPIDER_MODULE = 'DPaaS_v5.spiders'
+SPIDER_MODULES = ['scraper.spiders']
+NEWSPIDER_MODULE = 'scraper.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'DPaaS_v5 (+http://www.yourdomain.com)'
+#USER_AGENT = 'scraper (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -45,13 +45,13 @@ ROBOTSTXT_OBEY = False
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'DPaaS_v5.middlewares.DpaasV5SpiderMiddleware': 543,
+#    'scraper.middlewares.ScraperSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'DPaaS_v5.middlewares.DpaasV5DownloaderMiddleware': 543,
+#    'scraper.middlewares.ScraperDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -63,7 +63,8 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'DPaaS_v5.pipelines.DiaperPipeline': 300,
+   'scraper.pipelines.DiaperPipeline': 1,
+   'scraper.pipelines.MongoPipeline': 2,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -86,3 +87,10 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+# mongoDB
+MONGO_URI="mongodb://admin:admin@mongo:27017/items?authSource=admin"
+MONGO_DATABASE="items"
+
+LOG_LEVEL = 'DEBUG'  # to only display errors
+LOG_FORMAT = '%(levelname)s: %(message)s'

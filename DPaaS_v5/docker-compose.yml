@@ -1,0 +1,56 @@
+version: '3.9'
+services:
+    mongo:
+        image: mongo:5.0
+        ports:
+            - "27017:27017"
+        networks:
+            - mongo-compose-network
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+            MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+        volumes:
+            - ~/apps/mongo:/data/db
+
+    mongo-express:
+        image: mongo-express:0.54
+        ports:
+            - "8081:8081"
+        depends_on:
+            - mongo
+        networks:
+            - mongo-compose-network
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER}
+            ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASS}
+            ME_CONFIG_MONGODB_SERVER: mongo
+        volumes:
+            - ./data:/data/db
+
+    scraper:
+        build: ./dpaas_scraper
+        depends_on:
+            - mongo
+        command: bash -c 'scrapy list | xargs -I {} -t scrapy crawl {}'
+        networks:
+            - mongo-compose-network
+        environment:
+            MONGO_URI: ${MONGO_URI}
+        volumes:
+            - ./dpaas_scraper:/app
+
+    backend:
+        build: ./dpaas_api
+        ports:
+            - "8080:80"
+        depends_on:
+            - mongo
+        networks:
+            - mongo-compose-network
+        environment:
+            MONGO_URI: ${MONGO_URI}
+
+networks:
+  mongo-compose-network:
+    driver: bridge
