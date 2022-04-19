@@ -1070,7 +1070,7 @@ En esta sección nos excedemos un poco del target de la charla. Aún asi describ
 | :------------- | :------------- |
 | MongoDB        | Base de Datos no relacional donde guardaremos los items scrapeados.  |
 | Mongo-Express  | Administrador de MongoDB, nos permite visualizar los datos alamcenados en MongoDB rapidamente |
-| Backend  | FastAPI - Aplicación de Backend que expondrá un endpoint `/get-diapers` |
+| Backend  | FastAPI - Aplicación de Backend que expondrá un endpoint `/query-diapers` |
 | Scrapers  | Scrapy - Proyecto de scrapy similar a los realizamos en secciones anteriores |
 
 #### ¿Como levantarlo?
