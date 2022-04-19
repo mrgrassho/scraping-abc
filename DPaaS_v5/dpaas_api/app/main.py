@@ -50,7 +50,7 @@ def or_range_query(query, key_min, key_max, value=None):
         query.update({ "$or": [{key_min: {"$gte": value}}, {key_max: {"$lte": value}}]})
     return query
 
-def query_diapers(
+def _query_diapers(
         collection,
         price_lte,
         price_gte,
@@ -79,7 +79,7 @@ def query_diapers(
 app = FastAPI()
 
 @app.get("/query-diapers", response_model=List[Diaper])
-def get_diapers(
+def query_diapers(
         price_lte: Optional[float] = Query(None),
         price_gte: Optional[float] = Query(None),
         brands: Optional[str] = Query(None),
@@ -91,5 +91,5 @@ def get_diapers(
         page_limit: Optional[float] = Query(20)
     ):
     collection = get_collection()
-    diapers = query_diapers(collection, price_lte, price_gte, brands, sizes, target_kg, unit_price_lte, unit_price_gte, page, page_limit)
+    diapers = _query_diapers(collection, price_lte, price_gte, brands, sizes, target_kg, unit_price_lte, unit_price_gte, page, page_limit)
     return diapers
